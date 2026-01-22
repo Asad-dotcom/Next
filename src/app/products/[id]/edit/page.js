@@ -1,71 +1,38 @@
-"use client";
+import React from "react";
+import { redirect } from "next/navigation";
+import prisma from "../../../../lib/prisma";
 
-import React, { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { useProducts } from "../../../../lib/useProducts";
+async function updateProductAction(id, formData) {
+  "use server";
 
-const EditProductPage = () => {
-  const router = useRouter();
-  const params = useParams();
-  const { products, loading, getProductById, updateProduct } = useProducts();
+  const name = formData.get("name");
+  const category = formData.get("category");
+  const price = Number(formData.get("price") || 0);
+  const stock = Number(formData.get("stock") || 0);
+  const description = formData.get("description") || null;
 
-  const [form, setForm] = useState({
-    name: "",
-    category: "",
-    price: "",
-    stock: "",
-    description: "",
+  await prisma.product.update({
+    where: { id },
+    data: { name, category, price, stock, description },
   });
 
-  useEffect(() => {
-    if (loading) return;
-    const id = Number(params.id);
-    const product = getProductById(id);
-    if (!product) {
-      router.push("/products");
-      return;
-    }
+  redirect("/products");
+}
 
-    setForm({
-      name: product.name || "",
-      category: product.category || "",
-      price: String(product.price ?? ""),
-      stock: String(product.stock ?? ""),
-      description: product.description || "",
-    });
-  }, [loading, params.id, getProductById, router]);
+const EditProductPage = async ({ params }) => {
+  const id = Number(params.id);
+  const product = await prisma.product.findUnique({ where: { id } });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const id = Number(params.id);
-
-    const price = Number(form.price) || 0;
-    const stock = Number(form.stock) || 0;
-
-    updateProduct(id, {
-      name: form.name,
-      category: form.category,
-      price,
-      stock,
-      description: form.description,
-    });
-
-    router.push("/products");
-  };
-
-  if (loading) {
-    return <div className="p-4">Loading...</div>;
+  if (!product) {
+    redirect("/products");
   }
+
+  const updateWithId = updateProductAction.bind(null, id);
 
   return (
     <div className="p-6 max-w-xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Edit Product</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form action={updateWithId} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1" htmlFor="name">
             Name
@@ -73,8 +40,7 @@ const EditProductPage = () => {
           <input
             id="name"
             name="name"
-            value={form.name}
-            onChange={handleChange}
+            defaultValue={product.name || ""}
             className="w-full border rounded px-3 py-2"
             required
           />
@@ -87,8 +53,7 @@ const EditProductPage = () => {
           <input
             id="category"
             name="category"
-            value={form.category}
-            onChange={handleChange}
+            defaultValue={product.category || ""}
             className="w-full border rounded px-3 py-2"
             required
           />
@@ -103,8 +68,7 @@ const EditProductPage = () => {
               id="price"
               name="price"
               type="number"
-              value={form.price}
-              onChange={handleChange}
+              defaultValue={String(product.price ?? "")}
               className="w-full border rounded px-3 py-2"
               required
             />
@@ -117,8 +81,7 @@ const EditProductPage = () => {
               id="stock"
               name="stock"
               type="number"
-              value={form.stock}
-              onChange={handleChange}
+              defaultValue={String(product.stock ?? "")}
               className="w-full border rounded px-3 py-2"
               required
             />
@@ -132,8 +95,7 @@ const EditProductPage = () => {
           <textarea
             id="description"
             name="description"
-            value={form.description}
-            onChange={handleChange}
+            defaultValue={product.description || ""}
             className="w-full border rounded px-3 py-2"
             rows={3}
           />
@@ -148,7 +110,7 @@ const EditProductPage = () => {
           </button>
           <button
             type="button"
-            onClick={() => router.push("/products")}
+            formAction="/products"
             className="px-4 py-2 rounded border border-gray-300"
           >
             Cancel
