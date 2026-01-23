@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import prisma from "../../../../lib/prisma";
+import { getProductById, updateProduct, deleteProduct } from "../../../../lib/productService";
 
 export async function GET(_request, { params }) {
-  const id = Number(params.id);
-  const product = await prisma.product.findUnique({ where: { id } });
+  const resolvedParams = await params;
+  const product = await getProductById(resolvedParams.id);
 
   if (!product) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -13,26 +13,14 @@ export async function GET(_request, { params }) {
 }
 
 export async function PUT(request, { params }) {
-  const id = Number(params.id);
+  const resolvedParams = await params;
   const body = await request.json();
-
-  const product = await prisma.product.update({
-    where: { id },
-    data: {
-      name: body.name,
-      category: body.category,
-      price: body.price,
-      stock: body.stock,
-      description: body.description ?? null,
-      image: body.image ?? null,
-    },
-  });
-
+  const product = await updateProduct(resolvedParams.id, body);
   return NextResponse.json(product);
 }
 
 export async function DELETE(_request, { params }) {
-  const id = Number(params.id);
-  await prisma.product.delete({ where: { id } });
+  const resolvedParams = await params;
+  await deleteProduct(resolvedParams.id);
   return NextResponse.json({ success: true });
 }

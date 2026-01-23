@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import prisma from "../../../lib/prisma";
 
@@ -99,13 +100,12 @@ const CreateProductPage = () => {
          >
             Save
           </button>
-          <button
-            type="button"
-            formAction="/products"
-            className="px-4 py-2 rounded border border-gray-300"
+          <Link
+            href="/products"
+            className="px-4 py-2 rounded border border-gray-300 inline-block text-center"
           >
             Cancel
-          </button>
+          </Link>
         </div>
       </form>
     </div>

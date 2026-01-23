@@ -1,12 +1,56 @@
-import React from "react";
-import Link from "next/link";
-import Product from "../components/Product";
-import prisma from "../../lib/prisma";
+"use client";
 
-const Page = async () => {
-  const products = await prisma.product.findMany({
-    orderBy: { id: "asc" },
-  });
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import Product from "../components/Product";
+
+const Page = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch("/api/products");
+      const data = await response.json();
+      setProducts(data);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (id) => {
+    router.push(`/products/${id}/edit`);
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const response = await fetch(`/api/products/${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setProducts(products.filter((product) => product.id !== id));
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex justify-center items-center">
+        <p className="text-lg">Loading products...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-4">
@@ -20,7 +64,12 @@ const Page = async () => {
         </Link>
       </div>
 
-      <Product products={products} showActions={false} />
+      <Product
+        products={products}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        showActions={true}
+      />
     </div>
   );
 };

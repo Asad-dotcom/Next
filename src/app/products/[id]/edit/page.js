@@ -20,7 +20,8 @@ async function updateProductAction(id, formData) {
 }
 
 const EditProductPage = async ({ params }) => {
-  const id = Number(params.id);
+  const resolvedParams = await params;
+  const id = Number(resolvedParams.id);
   const product = await prisma.product.findUnique({ where: { id } });
 
   if (!product) {

@@ -1,26 +1,13 @@
 import { NextResponse } from "next/server";
-import prisma from "../../../lib/prisma";
+import { getAllProducts, createProduct } from "../../../lib/productService";
 
 export async function GET() {
-  const products = await prisma.product.findMany({
-    orderBy: { id: "asc" },
-  });
+  const products = await getAllProducts();
   return NextResponse.json(products);
 }
 
 export async function POST(request) {
   const body = await request.json();
-
-  const product = await prisma.product.create({
-    data: {
-      name: body.name,
-      category: body.category,
-      price: body.price,
-      stock: body.stock,
-      description: body.description ?? null,
-      image: body.image ?? null,
-    },
-  });
-
+  const product = await createProduct(body);
   return NextResponse.json(product, { status: 201 });
 }
